@@ -11,7 +11,7 @@ struct ContentView: View {
     @State var inputText: String = ""
     @State var messageList: [Message] = []
     
-//    @Environment(\.messageClient) var messageClient
+    @Environment(\.messageClient) var messageClient
     
     var body: some View {
         VStack {
@@ -20,7 +20,6 @@ struct ContentView: View {
             Spacer()
                 .frame(height: 30)
             Button {
-                
             } label: {
                 Text("Save")
             }
@@ -28,12 +27,22 @@ struct ContentView: View {
         }
         .padding()
         .task {
-//            messageList = await messageClient.fetch()
-//                .map { .init(id: $0.id.uuidString, text: $0.message) }
+            messageList = await messageClient.fetch()
+                .map { .init(id: $0.id.uuidString, text: $0.message) }
         }
     }
 }
 
 #Preview {
     ContentView()
+        .environment(
+            \.messageClient,
+             .init(fetch: {
+                 return [
+                    .init(id: UUID(), message: "Test")
+                 ]
+             }, save: {
+                 print("Saved: \($0)")
+             })
+        )
 }

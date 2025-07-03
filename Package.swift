@@ -11,11 +11,7 @@ let package = Package(
         .library(
             name: "Cocoon",
             type: .dynamic,
-            targets: [
-                "Cocoon",
-                "CocoonMacro",
-                "CocoonCore"
-            ]
+            targets: ["Cocoon"]
         ),
     ],
     dependencies: [

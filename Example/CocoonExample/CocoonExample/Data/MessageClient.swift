@@ -9,13 +9,13 @@ import Cocoon
 import SwiftUI
 
 struct MessageClient {
-    let fetch: () async -> [MessageEntity]
-    let save: (MessageEntity) async -> Void
+    let fetch: () async -> [MessageObjectEntity]
+    let save: (MessageObjectEntity) async -> Void
 }
 
-extension MessageClient: EnvironmentKey {
+extension EnvironmentValues {
     static let realm = RealmFactory.create(url: .applicationDirectory, version: 1)
-    static let defaultValue: MessageClient = .init {
+    @Entry var messageClient: MessageClient = .init {
         do {
             return try await realm.value.read()
         }
@@ -30,12 +30,5 @@ extension MessageClient: EnvironmentKey {
         catch {
             print("error: \(error)")
         }
-    }
-}
-
-extension EnvironmentValues {
-    var messageClient: MessageClient {
-        get { self[MessageClient.self] }
-        set { self[MessageClient.self] = newValue }
     }
 }
