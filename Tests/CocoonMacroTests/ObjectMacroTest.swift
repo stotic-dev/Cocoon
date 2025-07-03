@@ -22,15 +22,7 @@ final class ObjectMacroTest: XCTestCase {
                 @Persisted var id: String
                 @Persisted var name: String
                 @Persisted var age: Int
-                @ObjectMember @Persisted var hoge: HogeObject?
-                
-                convenience init(id: String, name: String, age: Int, hoge: HogeObject.HogeObjectEntity) {
-                    self.init()
-                    self.id = id
-                    self.name = name
-                    self.age = age
-                    self.hoge = hoge.toRealmObject()
-                }
+                @Persisted var hoge: HogeObject?
             }
             """,
             expandedSource: """
@@ -38,26 +30,16 @@ final class ObjectMacroTest: XCTestCase {
                 @Persisted var id: String
                 @Persisted var name: String
                 @Persisted var age: Int
-                @ObjectMember @Persisted var hoge: HogeObject?
-                
-                convenience init(id: String, name: String, age: Int, hoge: HogeObject.HogeObjectEntity) {
+                @Persisted var hoge: HogeObject?
+            }
+            
+            extension SampleObject {
+                public convenience init(id: String, name: String, age: Int, hoge: HogeObject?) {
                     self.init()
                     self.id = id
                     self.name = name
                     self.age = age
-                    self.hoge = hoge.toRealmObject()
-                }
-            }
-            
-            public extension SampleObject {
-                typealias EntityType = SampleObjectEntity
-                @ObjectEntity
-                struct SampleObjectEntity: Sendable {
-                    public typealias RealmObject = SampleObject
-                    public let id: String
-                    public let name: String
-                    public let age: Int
-                        @ObjectMember public let hoge: HogeObject.EntityType?
+                    self.hoge = hoge
                 }
             }
             """,

@@ -10,10 +10,8 @@ import SwiftSyntaxMacros
 
 struct EntityMember {
     let propertyName: TokenSyntax
-    let pattern: PatternSyntax
-    let typeAnnotation: TypeAnnotationSyntax
+    let propertyType: TypeSyntax
     let objectMemberType: ObjectMemberInfo
-    let attributes: AttributeListSyntax
     
     var isObjectMember: Bool { objectMemberType.isObjectMember }
     
@@ -33,62 +31,7 @@ struct EntityMember {
         }
         
         self.propertyName = pattern.cast(IdentifierPatternSyntax.self).identifier
-        self.pattern = pattern
-        self.typeAnnotation = typeAnnotation
+        self.propertyType = typeAnnotation.type
         self.objectMemberType = .init(variable: variable)
-        self.attributes = variable.attributes
-    }
-    
-    func createVariableDeclSyntax(isPublic: Bool) -> VariableDeclSyntax {
-        let typeAnnotation = if objectMemberType.isObjectMember {
-            getObjectMemberTypeAnnotation()
-        }
-        else {
-            typeAnnotation
-        }
-        return VariableDeclSyntax(
-            attributes: getVariableAttributes(),
-            modifiers: isPublic ? [DeclModifierSyntax(name: .keyword(.public))] : [],
-            bindingSpecifier: .keyword(.let),
-            bindings: [
-                .init(
-                    pattern: pattern,
-                    typeAnnotation: typeAnnotation
-                )
-            ]
-        )
-    }
-}
-
-private extension EntityMember {
-    func getVariableAttributes() -> AttributeListSyntax {
-        if objectMemberType.isObjectMember,
-           let attribute = attributes.first?.cast(AttributeSyntax.self) {
-            return [.init(attribute)]
-        }
-        else {
-            return []
-        }
-    }
-    
-    func getObjectMemberTypeAnnotation() -> TypeAnnotationSyntax {
-        if let optionalType = typeAnnotation.type.as(OptionalTypeSyntax.self) {
-            return TypeAnnotationSyntax(
-                type: OptionalTypeSyntax(
-                    wrappedType: MemberTypeSyntax(
-                        baseType: optionalType.wrappedType,
-                        name: .identifier("EntityType")
-                    )
-                )
-            )
-        }
-        else {
-            return TypeAnnotationSyntax(
-                type: MemberTypeSyntax(
-                    baseType: typeAnnotation.type,
-                    name: .identifier("EntityType")
-                )
-            )
-        }
     }
 }

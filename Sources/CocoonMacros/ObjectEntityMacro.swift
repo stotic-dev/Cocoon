@@ -8,34 +8,6 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-struct ObjectEntityMemberInfo {
-    let objectMemberInfo: ObjectMemberInfo
-    let propertyName: String
-    
-    init?(variable: VariableDeclSyntax) {
-        guard let propertyName = variable.bindings.first?.pattern.cast(IdentifierPatternSyntax.self).identifier.text else {
-            
-            return nil
-        }
-        self.propertyName = propertyName
-        objectMemberInfo = ObjectMemberInfo(variable: variable)
-    }
-}
-
-struct ObjectEntityArgs {
-    let arguments: LabeledExprListSyntax?
-    
-    var realmObjectType: TokenSyntax? {
-        return arguments?
-            .first?
-            .expression.cast(MemberAccessExprSyntax.self)
-            .base?.as(DeclReferenceExprSyntax.self)?
-            .baseName
-    }
-}
-
-
-
 public struct ObjectEntityMacro: ExtensionMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -189,7 +161,10 @@ private extension ObjectEntityMacro {
                                     )
                                     AssignmentExprSyntax(equal: .equalToken())
                                     FunctionCallExprSyntax(
-                                        calledExpression: getObjectTokenType(objectMemberInfo: memberInfo.objectMemberInfo),
+                                        calledExpression: MemberAccessExprSyntax(
+                                            period: .periodToken(),
+                                            name: .keyword(.`init`)
+                                        ),
                                         leftParen: .leftParenToken(),
                                         arguments: [
                                             LabeledExprSyntax(
@@ -203,29 +178,26 @@ private extension ObjectEntityMacro {
                                 }
                             ))
                         )
-                    }
+                    },
+                    elseKeyword: .keyword(.else),
+                    elseBody: .codeBlock(.init {
+                        .init {
+                            SequenceExprSyntax(
+                                elements: ExprListSyntax {
+                                    MemberAccessExprSyntax(
+                                        base: DeclReferenceExprSyntax(baseName: .keyword(.`self`)),
+                                        period: .periodToken(),
+                                        declName: .init(baseName: .identifier(memberInfo.propertyName))
+                                    )
+                                    AssignmentExprSyntax(equal: .equalToken())
+                                    DeclReferenceExprSyntax(baseName: .keyword(.nil))
+                                }
+                            )
+                        }
+                    })
                 ))
             )
         )
-    }
-    
-    static func getObjectTokenType(objectMemberInfo: ObjectMemberInfo) -> ExprSyntax {
-        if let identifierType = objectMemberInfo.identifierType {
-            return .init(DeclReferenceExprSyntax(baseName: identifierType.name))
-        }
-        else if let memberBaseType = objectMemberInfo.memberBaseType {
-            return .init(
-                MemberAccessExprSyntax(
-                    base: DeclReferenceExprSyntax(
-                        baseName: memberBaseType.name),
-                    period: .periodToken(),
-                    declName: .init(baseName: .identifier("EntityType"))
-                )
-            )
-        }
-        else {
-            fatalError("Not unexpected type with @ObjectMember.")
-        }
     }
     
     static func getRealmConvertFunctionDeclSyntax(
@@ -280,7 +252,9 @@ private extension ObjectEntityMacro {
         let expression: ExprSyntaxProtocol = if objectEntityInfo.objectMemberInfo.isObjectMember {
             FunctionCallExprSyntax(
                 calledExpression: MemberAccessExprSyntax(
-                    base: DeclReferenceExprSyntax(baseName: .identifier(objectEntityInfo.propertyName)),
+                    base: OptionalChainingExprSyntax(
+                        expression: DeclReferenceExprSyntax(baseName: .identifier(objectEntityInfo.propertyName))
+                    ),
                     period: .periodToken(),
                     name: .identifier("toRealmObject")
                 ),
