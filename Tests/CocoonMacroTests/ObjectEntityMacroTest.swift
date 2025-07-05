@@ -68,6 +68,8 @@ final class ObjectEntityMacroTest: XCTestCase {
                     self.id = realmObject.id
                     if let hoge = realmObject.hoge {
                         self.hoge = .init(realmObject: hoge)
+                    } else {
+                        self.hoge = nil
                     }
                 }
                 public func toRealmObject() -> SampleObject {

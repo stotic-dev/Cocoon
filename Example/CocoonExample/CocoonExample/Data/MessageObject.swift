@@ -7,7 +7,6 @@
 
 import Cocoon
 import Foundation
-import RealmSwift
 
 @Object
 final class MessageObject: Object {
@@ -19,4 +18,11 @@ final class MessageObject: Object {
 struct MessageObjectEntity: Sendable {
     let id: UUID
     let message: String
+}
+
+extension MessageObjectEntity {
+    init?(message: Message) {
+        guard let id = UUID(uuidString: message.id) else { return nil }
+        self.init(id: id, message: message.text)
+    }
 }
